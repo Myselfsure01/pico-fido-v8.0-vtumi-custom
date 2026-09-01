@@ -1,202 +1,409 @@
-# Pico FIDO
-This project transforms your Raspberry Pi Pico or ESP32 microcontroller into an integrated FIDO Passkey, functioning like a standard USB Passkey for authentication.
+# Pico FIDO v8.0 VTUMI Custom
 
-If you are looking for a OpenPGP + Fido, see: https://github.com/polhenarejos/pico-fido2. Available through [PicoKey App](https://www.picokeys.com/picokeyapp/ "PicoKey App").
+**Pico FIDO v8.0 VTUMI 定制版**
 
-## Features
-Pico FIDO includes the following features:
+[English](#english) | [中文](#中文)
 
-- CTAP 2.3 / CTAP 1
-- Authenticated passkey export and import through the open-source Pico Vault
-- FIDO 2.3 extensions, including UVM, third-party payments, and PIN complexity policy
+---
+
+## English
+
+### Overview
+
+This project is a customized firmware based on [Pico FIDO](https://github.com/polhenarejos/pico-fido) v8.0.
+
+It keeps the new v8.0 credential and storage architecture while restoring several device commissioning and PHY configuration capabilities from the earlier implementation.
+
+### Main Changes
+
+#### 1. Rollback
+
+Removed the automatic rollback version injection from the build flow.
+
+This allows custom firmware development and testing without automatically adding the rollback version metadata used by the upstream build configuration.
+
+#### 2. WebAuthn Commissioning
+
+Restored the `CommissionProfile` WebAuthn configuration mechanism.
+
+The configuration profile is processed through:
+
+```text
+WebAuthn
+    ↓
+MakeCredential
+    ↓
+CommissionProfile
+    ↓
+phy_unserialize_data()
+    ↓
+phy_save()
+```
+
+Supported configuration items include:
+
+- Product Name
+- USB VID/PID
+- LED Driver
+- LED GPIO
+- LED Brightness
+- LED Mode
+- Button Timeout
+- ECC Curves
+- PHY options
+
+#### 3. PHY Configuration
+
+Restored the following CTAP configuration commands:
+
+```text
+CTAP_CONFIG_PHY_VIDPID
+CTAP_CONFIG_PHY_LED_GPIO
+CTAP_CONFIG_PHY_LED_BTNESS
+CTAP_CONFIG_PHY_OPTS
+```
+
+These commands are also reported through the `authenticatorConfig` capability list.
+
+#### 4. USB Identity
+
+Changed the USB Manufacturer string from:
+
+```text
+Pol Henarejos
+```
+
+to:
+
+```text
+Yubico
+```
+
+The USB Product Name can be customized through WebAuthn Commissioning.
+
+#### 5. Custom Pico Keys SDK
+
+This project uses the custom SDK:
+
+```text
+pico-keys-sdk-vtumi-custom
+```
+
+Repository:
+
+https://github.com/Myselfsure01/pico-keys-sdk-vtumi-custom
+
+### v8.0 Features Retained
+
+The following v8.0 functionality remains in the project:
+
+- Credential Management
+- Object Store
+- Resident Credentials
+- Vault
+- FIDO2
 - WebAuthn
-- U2F
-- HMAC-Secret extension
-- CredProtect extension
-- User presence enforcement through physical button
-- User verification with PIN
-- Discoverable credentials (resident keys)
-- Configurable policy to deny creation of resident/discoverable credentials
-- Credential expiration and revocation metadata
-- Credential management
-- ECDSA and EDDSA authentication
-- Support for SECP256R1, SECP384R1, SECP521R1, SECP256K1 and Ed25519 curves
-- App registration and login
-- Device selection
-- Support for vendor configuration
-- Backup with 24 words
-- Secure lock to protect the device from flash dumps
-- Permissions support (MC, GA, CM, ACFG, LBW)
-- Authenticator configuration
-- minPinLength extension
-- Self attestation
-- Enterprise attestation
-- credBlobs extension
-- largeBlobKey extension
-- Large blobs support (2048 bytes max)
-- OATH (based on YKOATH protocol specification)
-- TOTP / HOTP
-- Yubikey One Time Password
-- Challenge-response generation
-- Emulated keyboard interface
-- Button press generates an OTP that is directly typed
-- Yubico Authenticator app compatible
-- Yubico YKMAN compatible
-- Nitrokey nitropy and nitroapp compatible
-- Secure Boot and Secure Lock in RP2350 and ESP32-S3 MCUs
-- One Time Programming to store the master key that encrypts all resident keys and seeds.
-- Rescue interface to allow recovery of the device if it becomes unresponsive or undetectable.
-- LED customization with PicoKey App.
+- Passkey
+- FIDO PIN / UV
+- Large Blob support
+- OATH
+- Yubico OTP
+- CCID
 
-The authenticated credential export and import design is described in Pol
-Henarejos, [*Vaulted Passkeys: A Device-Bound Proposal for Authenticated
-Credential Export and Import*](https://arxiv.org/abs/2608.13806). The proposal
-and implementation notes are also available in
-[`docs/vault`](docs/vault/vaulted_passkeys_proposal.md).
+The v8.0 credential and storage implementation was not replaced by the older v7.2 credential implementation.
 
-All features comply with the specifications. If you encounter unexpected behavior or deviations from the specifications, please open an issue.
+### Tested
 
-## Security Considerations
-Microcontrollers RP2350 and ESP32-S3 are designed to support secure environments when Secure Boot is enabled, and optionally, Secure Lock. These features allow a master key encryption key (MKEK) to be stored in a one-time programmable (OTP) memory region, which is inaccessible from outside secure code. This master key is then used to encrypt all private and secret keys on the device, protecting sensitive data from potential flash memory dumps.
+The current firmware has been tested with:
 
-**However**, the RP2040 microcontroller lacks this level of security hardware, meaning that it cannot provide the same protection. Data stored on its flash memory, including private or master keys, can be easily accessed or dumped, as encryption of the master key itself is not feasible. Consequently, if an RP2040 device is stolen, any stored private or secret keys may be exposed.
+- FIDO2
+- Passkey creation
+- Passkey login
+- Credential Management
+- FIDO PIN / UV
+- WebAuthn Commissioning
+- Custom USB VID/PID
+- Custom USB Product Name
+- Yubico Authenticator
+- Yubico OTP
+- OATH
 
-## Download
-**If you own an ESP32-S3 board, go to [ESP32 Flasher](https://www.picokeys.com/esp32-flasher/) for flashing your Pico FIDO.**
+### Target Hardware
 
-If you own a Raspberry Pico (RP2040 or RP2350), go to [Download page](https://www.picokeys.com/getting-started/), select your vendor and model and download the proper firmware; or go to [Release page](https://www.github.com/polhenarejos/pico-fido/releases/) and download the UF2 file for your board.
+```text
+MCU:   RP2350
+Board: waveshare_rp2350_one
+```
 
-UF2 files are shiped with a VID/PID granted by RaspberryPi (2E8A:10FE). If you plan to use it with OpenSC or similar tools, you should modify Info.plist of CCID driver to add these VID/PID or use the [PicoKey App](https://www.picokeys.com/picokeyapp/ "PicoKey App").
+### Firmware
 
-You can use whatever VID/PID for internal purposes, but remember that you are not authorized to distribute the binary with a VID/PID that you do not own.
+Current release:
 
-Note that the [PicoKey App](https://www.picokeys.com/picokeyapp/ "PicoKey App") is the most recommended.
+```text
+v8.0-vtumi-custom-1.1
+```
 
-## Build for Raspberry Pico
-Before building, ensure you have installed the toolchain for the Pico and that the Pico SDK is properly located on your drive.
+Firmware file:
 
-```sh
-git clone https://github.com/polhenarejos/pico-fido
+```text
+pico_fido_v8.0_vtumi_custom.uf2
+```
+
+SHA256:
+
+```text
+334252b21b814f1283337738e04d2e6b9f1c6af36a3303157bc8fc55200dfe26
+```
+
+See the GitHub Releases page for the downloadable firmware.
+
+### Build
+
+```bash
+git clone --recursive \
+  git@github.com:Myselfsure01/pico-fido-v8.0-vtumi-custom.git
+
+cd pico-fido-v8.0-vtumi-custom
+
+git checkout v8.0-vtumi-custom-1.1
 git submodule update --init --recursive
-cd pico-fido
+
 mkdir build
 cd build
-PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=board_type -DUSB_VID=0x1234 -DUSB_PID=0x5678
-make
-```
-Note that `PICO_BOARD`, `USB_VID` and `USB_PID` are optional. If not provided, `pico` board and VID/PID `FEFF:FCFD` will be used.
 
-Additionally, you can pass the `VIDPID=value` parameter to build the firmware with a known VID/PID. The supported values are:
+PICO_SDK_PATH=~/pico-sdk cmake .. \
+  -DPICO_BOARD=waveshare_rp2350_one
 
-- `NitroHSM`
-- `NitroFIDO2`
-- `NitroStart`
-- `NitroPro`
-- `Nitro3`
-- `Yubikey5`
-- `YubikeyNeo`
-- `YubiHSM`
-- `Gnuk`
-- `GnuPG`
-
-After running `make`, the binary file `pico_fido.uf2` will be generated. To load this onto your Pico board:
-
-1. Put the Pico board into loading mode by holding the `BOOTSEL` button while plugging it in.
-2. Copy the `pico_fido.uf2` file to the new USB mass storage device that appears.
-3. Once the file is copied, the Pico mass storage device will automatically disconnect, and the Pico board will reset with the new firmware.
-4. A blinking LED will indicate that the device is ready to work.
-
-## Led blink
-Pico FIDO uses the led to indicate the current status. Four states are available:
-### Press to confirm
-The Led is almost on all the time. It goes off for 100 miliseconds every second.
-
-![Press to confirm](https://user-images.githubusercontent.com/55573252/162008917-6a730eac-396c-44cc-890e-802294be30a3.gif)
-
-### Idle mode
-In idle mode, the Pico FIDO goes to sleep. It waits for a command and it is awaken by the driver. The Led is almost off all the time. It goes on for 500 milliseconds every second.
-
-![Idle mode](https://user-images.githubusercontent.com/55573252/162008980-d5a5caad-072e-400c-98e3-2c606b4b2af9.gif)
-
-### Active mode
-In active mode, the Pico FIDO is awaken and ready to receive a command. It blinks four times in a second.
-
-![Active](https://user-images.githubusercontent.com/55573252/162008997-1ea8cd7e-5384-4893-9dcb-b473153fc375.gif)
-
-### Processing
-While processing, the Pico FIDO is busy and cannot receive additional commands until the current is processed. In this state, the Led blinks 20 times in a second.
-
-![Processing](https://user-images.githubusercontent.com/55573252/162009007-df45111e-2473-4a92-97c5-15c3cd19babd.gif)
-
-## Driver
-
-Pico FIDO uses the `HID` driver, which is present in all operating systems. It should be detected by all OS and browser/applications just like normal USB FIDO keys.
-
-## Tests
-
-Tests can be found in the `tests` folder. They are based on [FIDO2 tests](https://github.com/solokeys/fido2-tests "FIDO2 tests") from Solokeys but adapted to the [python-fido2](https://github.com/Yubico/python-fido2 "python-fido2") v1.0 package, which is a major refactor from the previous 0.8 version and includes the latest improvements from CTAP 2.1.
-
-To run all tests, use:
-
-```sh
-pytest
+cmake --build . -j$(nproc)
 ```
 
-To run a subset of tests, use the `-k <test>` flag:
+The resulting firmware is generated as:
 
-```sh
-pytest -k test_credprotect
+```text
+pico_fido.uf2
 ```
 
-## License and Commercial Use
+### Notes
 
-This project is available under two editions:
+This project is intended for development, research, and testing.
 
-**Community Edition (FOSS)**
-- Released under the GNU Affero General Public License v3 (AGPLv3).
-- You are free to study, modify, and run the code, including for internal evaluation.
-- If you distribute modified binaries/firmware, OR if you run a modified version of this project as a network-accessible service, you must provide the corresponding source code to the users of that binary or service, as required by AGPLv3.
-- No warranty. No SLA. No guaranteed support.
+Do not enable Secure Boot or Hardware Lock features unless you fully understand the consequences and have a suitable recovery/development plan.
 
-**Enterprise / Commercial Edition**
-- Proprietary license for organizations that want to:
-  - run this in production with multiple users/devices,
-  - integrate it into their own product/appliance,
-  - enforce corporate policies (PIN policy, admin/user roles, revocation),
-  - deploy it as an internal virtualized / cloud-style service,
-  - and *not* be required to publish derivative source code.
-- Base package includes:
-  - commercial license (no AGPLv3 disclosure obligation for your modifications / integration)
-  - onboarding call
-  - access to officially signed builds
-- Optional / on-demand enterprise components that can be added case-by-case:
-  - ability to operate in multi-user / multi-device environments
-  - device inventory, traceability and secure revocation/offboarding
-  - custom attestation, per-organization device identity / anti-cloning
-  - virtualization / internal "HSM or auth backend" service for multiple teams or tenants
-  - post-quantum (PQC) key material handling and secure PQC credential storage
-  - hierarchical deterministic key derivation (HD wallet–style key trees for per-user / per-tenant keys, firmware signing trees, etc.)
-  - cryptographically signed audit trail / tamper-evident logging
-  - dual-control / two-person approval for high-risk operations
-  - secure key escrow / disaster recovery strategy
-  - release-signing / supply-chain hardening toolchain
-  - policy-locked hardened mode ("FIPS-style profile")
-  - priority security-response SLA
-  - white-label demo / pre-sales bundle
+### License
 
-Typical licensing models:
-- Internal use (single legal entity, including internal private cloud / virtualized deployments).
-- OEM / Redistribution / Service (ship in your product OR offer it as a service to third parties).
+This project is based on Pico FIDO and related open-source projects.
 
-These options are scoped and priced individually depending on which components you actually need.
+Please comply with the licenses of the upstream project and all third-party dependencies.
 
-For commercial licensing and enterprise features, email pol@henarejos.me
-Subject: `ENTERPRISE LICENSE <your company name>`
+---
 
-See `ENTERPRISE.md` for details.
+## 中文
 
-## Credits
-Pico FIDO uses the following libraries or portion of code:
-- MbedTLS for cryptographic operations.
-- TinyUSB for low level USB procedures.
-- TinyCBOR for CBOR parsing and formatting.
+### 项目简介
+
+本项目基于 [Pico FIDO](https://github.com/polhenarejos/pico-fido) v8.0 进行定制开发。
+
+在保留 v8.0 新版 Credential、Object Store、Vault 等架构的基础上，恢复了旧版本中的部分设备配置与 PHY 配置能力。
+
+### 主要修改
+
+#### 1. Rollback / 回滚
+
+移除了构建流程中的自动 Rollback Version 注入。
+
+这样在自定义固件开发和测试时，不会自动加入上游构建配置中的 Rollback Version 元数据。
+
+#### 2. WebAuthn Commissioning / WebAuthn 设备配置
+
+恢复 `CommissionProfile` WebAuthn 配置机制。
+
+配置数据处理流程：
+
+```text
+WebAuthn
+    ↓
+MakeCredential
+    ↓
+CommissionProfile
+    ↓
+phy_unserialize_data()
+    ↓
+phy_save()
+```
+
+支持的配置项目包括：
+
+- Product Name / 产品名称
+- USB VID/PID
+- LED Driver / LED 驱动
+- LED GPIO
+- LED Brightness / LED 亮度
+- LED Mode / LED 模式
+- Button Timeout / 按键超时
+- ECC Curves / ECC 曲线
+- PHY Options / PHY 参数
+
+#### 3. PHY Configuration / PHY 配置
+
+恢复以下 CTAP 配置命令：
+
+```text
+CTAP_CONFIG_PHY_VIDPID
+CTAP_CONFIG_PHY_LED_GPIO
+CTAP_CONFIG_PHY_LED_BTNESS
+CTAP_CONFIG_PHY_OPTS
+```
+
+同时恢复这些配置在 `authenticatorConfig` 能力列表中的声明。
+
+#### 4. USB Identity / USB 身份信息
+
+将 USB Manufacturer 从：
+
+```text
+Pol Henarejos
+```
+
+修改为：
+
+```text
+Yubico
+```
+
+USB Product Name 可以通过 WebAuthn Commissioning 进行自定义。
+
+#### 5. Custom Pico Keys SDK / 自定义 Pico Keys SDK
+
+本项目使用自定义 SDK：
+
+```text
+pico-keys-sdk-vtumi-custom
+```
+
+仓库地址：
+
+https://github.com/Myselfsure01/pico-keys-sdk-vtumi-custom
+
+### 保留的 v8.0 功能
+
+以下 v8.0 功能保持不变：
+
+- Credential Management / 凭据管理
+- Object Store / 对象存储
+- Resident Credentials / 驻留凭据
+- Vault
+- FIDO2
+- WebAuthn
+- Passkey
+- FIDO PIN / UV
+- Large Blob
+- OATH
+- Yubico OTP
+- CCID
+
+本项目没有使用旧版 v7.2 的 Credential 实现替换 v8.0 的 Credential 和存储架构。
+
+### 已测试
+
+当前固件已经实际测试：
+
+- FIDO2
+- Passkey 创建
+- Passkey 登录
+- Credential Management
+- FIDO PIN / UV
+- WebAuthn Commissioning
+- 自定义 USB VID/PID
+- 自定义 USB Product Name
+- Yubico Authenticator
+- Yubico OTP
+- OATH
+
+### 硬件目标
+
+```text
+MCU：   RP2350
+开发板：waveshare_rp2350_one
+```
+
+### 固件
+
+当前版本：
+
+```text
+v8.0-vtumi-custom-1.1
+```
+
+固件文件：
+
+```text
+pico_fido_v8.0_vtumi_custom.uf2
+```
+
+SHA256：
+
+```text
+334252b21b814f1283337738e04d2e6b9f1c6af36a3303157bc8fc55200dfe26
+```
+
+可前往 GitHub Releases 下载已经编译好的固件。
+
+### 编译
+
+```bash
+git clone --recursive \
+  git@github.com:Myselfsure01/pico-fido-v8.0-vtumi-custom.git
+
+cd pico-fido-v8.0-vtumi-custom
+
+git checkout v8.0-vtumi-custom-1.1
+git submodule update --init --recursive
+
+mkdir build
+cd build
+
+PICO_SDK_PATH=~/pico-sdk cmake .. \
+  -DPICO_BOARD=waveshare_rp2350_one
+
+cmake --build . -j$(nproc)
+```
+
+编译完成后会生成：
+
+```text
+pico_fido.uf2
+```
+
+### 注意事项
+
+本项目主要用于开发、研究和测试。
+
+在启用 Secure Boot 或 Hardware Lock 等功能之前，请充分了解其工作机制和潜在后果，并准备好相应的恢复/开发方案。
+
+### 许可证
+
+本项目基于 Pico FIDO 及相关开源项目修改。
+
+请遵守上游项目以及所有第三方依赖对应的许可证要求。
+
+---
+
+## Upstream / 上游项目
+
+Pico FIDO:
+
+https://github.com/polhenarejos/pico-fido
+
+Pico Keys SDK:
+
+https://github.com/polhenarejos/pico-keys-sdk
+
+Custom Pico Keys SDK:
+
+https://github.com/Myselfsure01/pico-keys-sdk-vtumi-custom
+
+## Release / 发布版本
+
+Current release / 当前版本：
+
+**v8.0-vtumi-custom-1.1**
