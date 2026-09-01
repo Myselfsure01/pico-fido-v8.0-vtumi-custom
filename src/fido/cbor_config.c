@@ -237,6 +237,23 @@ int cbor_config(const uint8_t *data, size_t len) {
             }
             flash_commit();
         }
+        else if (vendorCommandId == CTAP_CONFIG_PHY_VIDPID) {
+            phy_data.vid = (vendorParamInt >> 16) & 0xFFFF;
+            phy_data.pid = vendorParamInt & 0xFFFF;
+            phy_data.vidpid_present = true;
+        }
+        else if (vendorCommandId == CTAP_CONFIG_PHY_LED_GPIO) {
+            phy_data.led_gpio = (uint8_t)vendorParamInt;
+            phy_data.led_gpio_present = true;
+        }
+        else if (vendorCommandId == CTAP_CONFIG_PHY_LED_BTNESS) {
+            phy_data.led_brightness = (uint8_t)vendorParamInt;
+            phy_data.led_brightness_present = true;
+        }
+        else if (vendorCommandId == CTAP_CONFIG_PHY_OPTS) {
+            phy_data.opts = (uint16_t)vendorParamInt;
+        }
+
         else if (vendorCommandId == CTAP_CONFIG_PIN_POLICY) {
             file_t *ef_pin_policy = file_search_by_fid(EF_PIN_COMPLEXITY_POLICY, NULL, SPECIFY_EF);
             if (ef_pin_policy) {

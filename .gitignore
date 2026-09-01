@@ -2,3 +2,19 @@ build*/
 *__pycache__*
 legacy/
 
+
+# Build output
+build/
+*.uf2
+*.elf
+*.bin
+
+# Local/private keys
+*.pem
+*.key
+
+# Local backup files
+*.original
+*.backup
+*.before-*
+*.v80-original

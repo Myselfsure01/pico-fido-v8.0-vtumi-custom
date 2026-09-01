@@ -120,6 +120,10 @@ typedef struct {
 #define CTAP_CONFIG_NORK                0x00052b41f53590d3
 #define CTAP_CONFIG_CREDENTIAL_REVOKE   0x0005961ecba040f9
 #define CTAP_CONFIG_PIN_POLICY          0x0007d70fe96c3897
+#define CTAP_CONFIG_PHY_VIDPID          0x6fcb19b0cbe3acfa
+#define CTAP_CONFIG_PHY_LED_BTNESS       0x76a85945985d02fd
+#define CTAP_CONFIG_PHY_LED_GPIO         0x7b392a394de9f948
+#define CTAP_CONFIG_PHY_OPTS             0x269f3b09eceb805f
 
 #define CTAP_VENDOR_CBOR            (CTAPHID_VENDOR_FIRST + 1)
 

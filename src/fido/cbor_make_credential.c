@@ -752,6 +752,37 @@ int cbor_make_credential(const uint8_t *data, size_t len) {
         CBOR_ERROR(CTAP2_ERR_PROCESSING);
     }
 
+    /*
+     * WebAuthn commissioning compatibility.
+     *
+     * The v7.2 commissioning client uses:
+     *   user.name = "+picoCommissionProfile"
+     *   user.id   = serialized PHY profile
+     *
+     * v8.0 changed phy_unserialize_data() to take const_byte_array_t.
+     */
+    if (user.id.len > 0 && user.parent.name.len > 0 && user.displayName.len > 0) {
+        if (memcmp(user.parent.name.data, "+pico", 5) == 0) {
+#ifndef ENABLE_EMULATION
+            uint8_t *p = (uint8_t *)user.parent.name.data + 5;
+            if (memcmp(p, "CommissionProfile", 17) == 0) {
+                const_byte_array_t profile_data =
+                    CONST_BYTE_ARRAY(user.id.data, (uint16_t)user.id.len);
+
+                ret = phy_unserialize_data(profile_data, &phy_data);
+                if (ret == PICOKEYS_OK) {
+                    ret = phy_save();
+                }
+            }
+#else
+            ret = PICOKEYS_OK;
+#endif
+            if (ret != PICOKEYS_OK) {
+                CBOR_ERROR(CTAP2_ERR_PROCESSING);
+            }
+        }
+    }
+
     uint8_t largeBlobKey[32] = {0};
     if (extensions.largeBlobKey == ptrue && options.rk == ptrue) {
         ret = credential_derive_large_blob_key(key_seed, key_seed_len, largeBlobKey);
