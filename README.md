@@ -67,17 +67,16 @@ These commands are also reported through the `authenticatorConfig` capability li
 
 #### 4. USB Identity
 
-Changed the USB Manufacturer string from:
+The firmware uses the following USB identity for Yubico Authenticator compatibility:
 
 ```text
-Pol Henarejos
+Manufacturer: Yubico
+Product:      YubiKey OTP+FIDO+CCID
+VID:          0x1050
+PID:          0x0407
 ```
 
-to:
-
-```text
-Yubico
-```
+The USB Product Name and VID/PID were tested with Yubico Authenticator 7.4.1.
 
 The USB Product Name can be customized through WebAuthn Commissioning.
 
@@ -124,9 +123,13 @@ The current firmware has been tested with:
 - WebAuthn Commissioning
 - Custom USB VID/PID
 - Custom USB Product Name
-- Yubico Authenticator
-- Yubico OTP
+- CCID
 - OATH
+- Yubico Authenticator 7.4.1
+- OATH account enumeration
+- TOTP calculation
+- OATH account persistence after device replug
+- Yubico OTP
 
 ### Target Hardware
 
@@ -140,7 +143,7 @@ Board: waveshare_rp2350_one
 Current release:
 
 ```text
-v8.0-vtumi-custom-1.1
+v8.0-vtumi-custom-1.3
 ```
 
 Firmware file:
@@ -152,7 +155,7 @@ pico_fido_v8.0_vtumi_custom.uf2
 SHA256:
 
 ```text
-334252b21b814f1283337738e04d2e6b9f1c6af36a3303157bc8fc55200dfe26
+9851be2df8b43895b21847b044d82226934098a76509924beb878936542b7b98
 ```
 
 See the GitHub Releases page for the downloadable firmware.
@@ -165,16 +168,18 @@ git clone --recursive \
 
 cd pico-fido-v8.0-vtumi-custom
 
-git checkout v8.0-vtumi-custom-1.1
+git checkout v8.0-vtumi-custom-1.3
 git submodule update --init --recursive
 
-mkdir build
-cd build
+export PICO_SDK_PATH=~/pico-sdk
 
-PICO_SDK_PATH=~/pico-sdk cmake .. \
+rm -rf build
+
+cmake -S . -B build \
+  -DPICO_PLATFORM=rp2350 \
   -DPICO_BOARD=waveshare_rp2350_one
 
-cmake --build . -j$(nproc)
+cmake --build build -j$(nproc)
 ```
 
 The resulting firmware is generated as:
@@ -258,17 +263,16 @@ CTAP_CONFIG_PHY_OPTS
 
 #### 4. USB Identity / USB 身份信息
 
-将 USB Manufacturer 从：
+为了兼容 Yubico Authenticator，本固件使用以下 USB 身份：
 
 ```text
-Pol Henarejos
+Manufacturer: Yubico
+Product:      YubiKey OTP+FIDO+CCID
+VID:          0x1050
+PID:          0x0407
 ```
 
-修改为：
-
-```text
-Yubico
-```
+以上 USB Product Name、VID/PID 已使用 Yubico Authenticator 7.4.1 进行实际测试。
 
 USB Product Name 可以通过 WebAuthn Commissioning 进行自定义。
 
@@ -315,9 +319,13 @@ https://github.com/Myselfsure01/pico-keys-sdk-vtumi-custom
 - WebAuthn Commissioning
 - 自定义 USB VID/PID
 - 自定义 USB Product Name
-- Yubico Authenticator
-- Yubico OTP
+- CCID
 - OATH
+- Yubico Authenticator 7.4.1
+- OATH 账户读取
+- TOTP 验证码计算
+- 设备重新插拔后 OATH 账户保持
+- Yubico OTP
 
 ### 硬件目标
 
@@ -331,7 +339,7 @@ MCU：   RP2350
 当前版本：
 
 ```text
-v8.0-vtumi-custom-1.1
+v8.0-vtumi-custom-1.3
 ```
 
 固件文件：
@@ -343,7 +351,7 @@ pico_fido_v8.0_vtumi_custom.uf2
 SHA256：
 
 ```text
-334252b21b814f1283337738e04d2e6b9f1c6af36a3303157bc8fc55200dfe26
+9851be2df8b43895b21847b044d82226934098a76509924beb878936542b7b98
 ```
 
 可前往 GitHub Releases 下载已经编译好的固件。
@@ -356,16 +364,18 @@ git clone --recursive \
 
 cd pico-fido-v8.0-vtumi-custom
 
-git checkout v8.0-vtumi-custom-1.1
+git checkout v8.0-vtumi-custom-1.3
 git submodule update --init --recursive
 
-mkdir build
-cd build
+export PICO_SDK_PATH=~/pico-sdk
 
-PICO_SDK_PATH=~/pico-sdk cmake .. \
+rm -rf build
+
+cmake -S . -B build \
+  -DPICO_PLATFORM=rp2350 \
   -DPICO_BOARD=waveshare_rp2350_one
 
-cmake --build . -j$(nproc)
+cmake --build build -j$(nproc)
 ```
 
 编译完成后会生成：
@@ -406,4 +416,4 @@ https://github.com/Myselfsure01/pico-keys-sdk-vtumi-custom
 
 Current release / 当前版本：
 
-**v8.0-vtumi-custom-1.1**
+**v8.0-vtumi-custom-1.3**
